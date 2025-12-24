@@ -139,7 +139,7 @@ class BlockchainMonitor:
                 self.last_processed_block[token_id] = current_block - 100
 
             from_block = self.last_processed_block[token_id] + 1
-            to_block = min(from_block + settings.MAX_BLOCKS_PER_SCAN, current_block - settings.BLOCK_CONFIRMATION_COUNT)
+            to_block = min(from_block + settings.MAX_BLOCKS_PER_SCAN - 1, current_block - settings.BLOCK_CONFIRMATION_COUNT)
 
             if from_block > to_block:
                 return  # No new confirmed blocks
