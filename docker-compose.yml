@@ -51,8 +51,8 @@ services:
       - ./database/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       CLICKHOUSE_DB: apexwatch
-      CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse}
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 10s
@@ -172,6 +172,10 @@ services:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
       - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_DB=apexwatch
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-clickhouse}
       - RABBITMQ_HOST=rabbitmq
       - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
       - WALLET_MONITOR_URL=http://wallet-monitor:8001
