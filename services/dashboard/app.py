@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from config import settings
 from auth import authenticate_user, create_access_token, verify_token, get_db_connection
 from psycopg2.extras import RealDictCursor
+from streamlit_cookies_manager import CookieManager
 
 
 # Page config
@@ -21,6 +22,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize cookies manager
+cookies = CookieManager()
 
 def init_session_state():
     """Initialize session state variables"""
@@ -32,6 +35,16 @@ def init_session_state():
         st.session_state.token = None
     if 'selected_token' not in st.session_state:
         st.session_state.selected_token = None
+
+    # Restore authentication from cookies
+    if not st.session_state.authenticated and 'apexwatch_token' in cookies:
+        token = cookies['apexwatch_token']
+        # Verify token is still valid
+        user_data = verify_token(token)
+        if user_data:
+            st.session_state.authenticated = True
+            st.session_state.username = user_data.get('sub')
+            st.session_state.token = token
 
 
 def login_page():
@@ -45,6 +58,11 @@ def login_page():
 
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
+
+                    # Store token in cookie for persistence
+                    cookies['apexwatch_token'] = token
+                    cookies['apexwatch_username'] = username
+                    cookies.save()
 
         if st.button("Login", use_container_width=True):
             if username and password:
@@ -508,6 +526,12 @@ def main():
             st.session_state.authenticated = False
             st.session_state.username = None
             st.session_state.token = None
+            # Clear cookies
+            if 'apexwatch_token' in cookies:
+                del cookies['apexwatch_token']
+            if 'apexwatch_username' in cookies:
+                del cookies['apexwatch_username']
+            cookies.save()
             st.rerun()
 
     # Display selected page
