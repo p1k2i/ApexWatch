@@ -146,6 +146,8 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: apexwatch-ollama
+    profiles:
+      - ollama
     ports:
       - "11434:11434"
     volumes:
@@ -153,6 +155,7 @@ services:
     networks:
       - apexwatch-network
     # Note: After first startup, run: docker exec -it apexwatch-ollama ollama pull llama3
+    # To enable: docker-compose --profile ollama up -d
 
   # ===================
   # MICROSERVICES
