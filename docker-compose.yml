@@ -173,7 +173,7 @@ services:
       - REDIS_HOST=redis
       - CLICKHOUSE_HOST=clickhouse
       - RABBITMQ_HOST=rabbitmq
-      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
       - WALLET_MONITOR_URL=http://wallet-monitor:8001
       - EXCHANGE_MONITOR_URL=http://exchange-monitor:8002
       - NEWS_MONITOR_URL=http://news-monitor:8003
