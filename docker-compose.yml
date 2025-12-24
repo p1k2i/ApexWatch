@@ -1,0 +1,290 @@
+version: '3.8'
+
+services:
+  # ===================
+  # DATABASES
+  # ===================
+
+  postgres:
+    image: postgres:17
+    container_name: apexwatch-postgres
+    environment:
+      POSTGRES_DB: apexwatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: apexwatch-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.10
+    container_name: apexwatch-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./database/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      CLICKHOUSE_DB: apexwatch
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  # ===================
+  # MESSAGE QUEUE
+  # ===================
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: apexwatch-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  # ===================
+  # ELK STACK
+  # ===================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: apexwatch-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: apexwatch-logstash
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    depends_on:
+      - elasticsearch
+    networks:
+      - apexwatch-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: apexwatch-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - apexwatch-network
+
+  # ===================
+  # OLLAMA (Local LLM)
+  # ===================
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: apexwatch-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - apexwatch-network
+    # Note: After first startup, run: docker exec -it apexwatch-ollama ollama pull llama3
+
+  # ===================
+  # MICROSERVICES
+  # ===================
+
+  core:
+    build:
+      context: ./services/core
+      dockerfile: Dockerfile
+    container_name: apexwatch-core
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+      - CLICKHOUSE_HOST=clickhouse
+      - RABBITMQ_HOST=rabbitmq
+      - OLLAMA_URL=http://ollama:11434
+      - WALLET_MONITOR_URL=http://wallet-monitor:8001
+      - EXCHANGE_MONITOR_URL=http://exchange-monitor:8002
+      - NEWS_MONITOR_URL=http://news-monitor:8003
+      - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - apexwatch-network
+    restart: unless-stopped
+
+  wallet-monitor:
+    build:
+      context: ./services/wallet_monitor
+      dockerfile: Dockerfile
+    container_name: apexwatch-wallet-monitor
+    ports:
+      - "8001:8001"
+    environment:
+      - POSTGRES_HOST=postgres
+      - CORE_SERVICE_URL=http://core:8000
+      - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
+      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY:-}
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL:-https://eth-mainnet.g.alchemy.com/v2/}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apexwatch-network
+    restart: unless-stopped
+
+  exchange-monitor:
+    build:
+      context: ./services/exchange_monitor
+      dockerfile: Dockerfile
+    container_name: apexwatch-exchange-monitor
+    ports:
+      - "8002:8002"
+    environment:
+      - POSTGRES_HOST=postgres
+      - CORE_SERVICE_URL=http://core:8000
+      - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apexwatch-network
+    restart: unless-stopped
+
+  news-monitor:
+    build:
+      context: ./services/news_monitor
+      dockerfile: Dockerfile
+    container_name: apexwatch-news-monitor
+    ports:
+      - "8003:8003"
+    environment:
+      - POSTGRES_HOST=postgres
+      - CORE_SERVICE_URL=http://core:8000
+      - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - apexwatch-network
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./services/dashboard
+      dockerfile: Dockerfile
+    container_name: apexwatch-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - POSTGRES_HOST=postgres
+      - CORE_SERVICE_URL=http://core:8000
+      - WALLET_MONITOR_URL=http://wallet-monitor:8001
+      - EXCHANGE_MONITOR_URL=http://exchange-monitor:8002
+      - NEWS_MONITOR_URL=http://news-monitor:8003
+      - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dashboard-jwt-secret-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      core:
+        condition: service_started
+    networks:
+      - apexwatch-network
+    restart: unless-stopped
+
+# ===================
+# NETWORKS
+# ===================
+
+networks:
+  apexwatch-network:
+    driver: bridge
+
+# ===================
+# VOLUMES
+# ===================
+
+volumes:
+  postgres_data:
+  redis_data:
+  clickhouse_data:
+  rabbitmq_data:
+  elasticsearch_data:
+  ollama_data:
