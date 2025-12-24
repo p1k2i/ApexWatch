@@ -14,7 +14,7 @@ import uvicorn
 
 from config import settings
 from database import db_manager
-from queue import queue_manager
+from queue_manager import queue_manager
 from processor import event_processor
 
 # Configure logging
