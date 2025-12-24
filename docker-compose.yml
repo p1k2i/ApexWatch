@@ -89,7 +89,7 @@ services:
   # ===================
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
     container_name: apexwatch-elasticsearch
     environment:
       - discovery.type=single-node
@@ -108,7 +108,7 @@ services:
       - apexwatch-network
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.0
+    image: docker.elastic.co/logstash/logstash:9.2.1
     container_name: apexwatch-logstash
     ports:
       - "5000:5000"
@@ -123,7 +123,7 @@ services:
       - apexwatch-network
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
+    image: docker.elastic.co/kibana/kibana:9.2.1
     container_name: apexwatch-kibana
     ports:
       - "5601:5601"
