@@ -8,6 +8,7 @@ from typing import Dict, Any, List, Optional
 import time
 from datetime import datetime
 import requests
+import re
 from config import settings
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -17,6 +18,12 @@ logger = logging.getLogger(__name__)
 # ERC-20 Transfer event signature
 TRANSFER_EVENT_SIGNATURE = Web3.keccak(text="Transfer(address,address,uint256)").hex()
 
+
+def sanitize_logs(message: str) -> str:
+    """Remove sensitive API keys from log messages"""
+    if settings.ALCHEMY_API_KEY:
+        message = message.replace(settings.ALCHEMY_API_KEY, "***SECRET***")
+    return message
 
 class BlockchainMonitor:
     """Monitors blockchain for token transfers"""
@@ -153,7 +160,7 @@ class BlockchainMonitor:
                 error_msg = f"Error getting logs for {token_config['symbol']}: {e}"
                 if hasattr(e, 'response'):
                     error_msg += f" - {e.response.text}"
-                logger.error(error_msg)
+                logger.error(sanitize_logs(error_msg))
                 return
 
             for log in logs:
