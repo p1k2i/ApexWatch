@@ -215,11 +215,17 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - POSTGRES_HOST=postgres
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-apexwatch}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - CORE_SERVICE_URL=http://core:8000
       - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
       - ALCHEMY_API_KEY=${ALCHEMY_API_KEY:-}
       - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL:-https://eth-mainnet.g.alchemy.com/v2/}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-30}
+      - BLOCK_CONFIRMATION_COUNT=${BLOCK_CONFIRMATION_COUNT:-12}
       - MAX_BLOCKS_PER_SCAN=${MAX_BLOCKS_PER_SCAN:-1000}
     depends_on:
       postgres:
