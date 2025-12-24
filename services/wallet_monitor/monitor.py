@@ -4,7 +4,6 @@ Monitors ERC-20 token transfers and manages wallet discovery
 """
 import logging
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from typing import Dict, Any, List, Optional
 import time
 from datetime import datetime
@@ -44,9 +43,6 @@ class BlockchainMonitor:
                 logger.warning("No Alchemy API key configured, using default RPC")
 
             self.w3 = Web3(Web3.HTTPProvider(rpc_url))
-
-            # Add PoA middleware for some networks
-            self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
             if self.w3.is_connected():
                 logger.info(f"Connected to Ethereum node, latest block: {self.w3.eth.block_number}")
