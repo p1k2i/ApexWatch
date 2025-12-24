@@ -170,17 +170,28 @@ services:
       - "8000:8000"
     environment:
       - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=apexwatch
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=8123
       - CLICKHOUSE_DB=apexwatch
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-clickhouse}
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
       - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
       - WALLET_MONITOR_URL=http://wallet-monitor:8001
       - EXCHANGE_MONITOR_URL=http://exchange-monitor:8002
       - NEWS_MONITOR_URL=http://news-monitor:8003
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
       - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
