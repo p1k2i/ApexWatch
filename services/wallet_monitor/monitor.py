@@ -111,6 +111,13 @@ class BlockchainMonitor:
         decimals = token_config['decimals']
 
         try:
+            # Validate and checksum address
+            try:
+                checksum_address = Web3.to_checksum_address(contract_address)
+            except Exception as e:
+                logger.error(f"Invalid contract address for {token_config['symbol']}: {contract_address} - {e}")
+                return
+
             # Get monitoring settings
             settings_dict = self.get_monitoring_settings(token_id)
             min_threshold = settings_dict.get('wallet_min_threshold', 1000000)
@@ -136,11 +143,18 @@ class BlockchainMonitor:
             filter_params = {
                 'fromBlock': from_block,
                 'toBlock': to_block,
-                'address': Web3.to_checksum_address(contract_address),
+                'address': checksum_address,
                 'topics': [TRANSFER_EVENT_SIGNATURE]
             }
 
-            logs = self.w3.eth.get_logs(filter_params)
+            try:
+                logs = self.w3.eth.get_logs(filter_params)
+            except Exception as e:
+                error_msg = f"Error getting logs for {token_config['symbol']}: {e}"
+                if hasattr(e, 'response'):
+                    error_msg += f" - {e.response.text}"
+                logger.error(error_msg)
+                return
 
             for log in logs:
                 self.process_transfer_log(log, token_id, decimals, min_threshold, max_threshold)
