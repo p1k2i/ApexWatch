@@ -206,17 +206,21 @@ async def get_thought_history(
     try:
         ch = db_manager.get_clickhouse()
 
-        query = f"""
+        # Validate and sanitize limit and offset
+        limit = min(max(int(limit), 1), 1000)  # Limit between 1 and 1000
+        offset = max(int(offset), 0)
+
+        query = """
             SELECT
-                id, token_id, event_type, thought, model_used,
-                tokens_used, processing_time_ms, timestamp
+                id, token_id, event_type, event_id, prompt, thought,
+                model_used, tokens_used, processing_time_ms, timestamp
             FROM llm_thoughts
-            WHERE token_id = '{token_id}'
+            WHERE token_id = %s
             ORDER BY timestamp DESC
-            LIMIT {limit} OFFSET {offset}
+            LIMIT %s OFFSET %s
         """
 
-        result = ch.query(query)
+        result = ch.query(query, parameters=[token_id, limit, offset])
 
         thoughts = []
         for row in result.result_rows:
@@ -224,11 +228,13 @@ async def get_thought_history(
                 "id": str(row[0]),
                 "token_id": row[1],
                 "event_type": row[2],
-                "thought": row[3],
-                "model_used": row[4],
-                "tokens_used": row[5],
-                "processing_time_ms": row[6],
-                "timestamp": row[7].isoformat() if row[7] else None
+                "event_id": row[3],
+                "prompt": row[4],
+                "thought": row[5],
+                "model_used": row[6],
+                "tokens_used": row[7],
+                "processing_time_ms": row[8],
+                "timestamp": row[9].isoformat() if row[9] else None
             })
 
         return {
