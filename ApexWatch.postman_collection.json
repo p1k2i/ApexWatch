@@ -1,0 +1,650 @@
+{
+	"info": {
+		"_postman_id": "apexwatch-collection-2024",
+		"name": "ApexWatch API Collection",
+		"description": "Complete API collection for ApexWatch cryptocurrency monitoring system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{ACCESS_KEY}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "X-Access-Key",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Core Service",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/health",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check Core Service health status"
+					}
+				},
+				{
+					"name": "Send Event (Webhook)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"price_change\",\n  \"data\": {\n    \"token_id\": \"{{TOKEN_ID}}\",\n    \"exchange\": \"binance\",\n    \"old_price\": 1.0,\n    \"new_price\": 1.05,\n    \"change_percent\": 5.0,\n    \"volume\": 1000000,\n    \"timestamp\": \"{{$isoTimestamp}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{CORE_URL}}/api/webhook/event",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"event"
+							]
+						},
+						"description": "Send an event to Core Service for processing"
+					}
+				},
+				{
+					"name": "Send Wallet Transfer Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"wallet_transfer\",\n  \"data\": {\n    \"token_id\": \"{{TOKEN_ID}}\",\n    \"from_address\": \"0x1234567890123456789012345678901234567890\",\n    \"to_address\": \"0x0987654321098765432109876543210987654321\",\n    \"amount\": 1000000,\n    \"tx_hash\": \"0xabcdef123456789\",\n    \"block_number\": 18500000,\n    \"timestamp\": \"{{$isoTimestamp}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{CORE_URL}}/api/webhook/event",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"event"
+							]
+						},
+						"description": "Send a wallet transfer event"
+					}
+				},
+				{
+					"name": "Send News Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"news_update\",\n  \"data\": {\n    \"token_id\": \"{{TOKEN_ID}}\",\n    \"title\": \"Breaking: Major Development in Crypto Market\",\n    \"summary\": \"Significant news affecting the cryptocurrency market today...\",\n    \"source\": \"CryptoNews\",\n    \"url\": \"https://example.com/article\",\n    \"relevance_score\": 0.85,\n    \"sentiment_score\": 0.6,\n    \"published_at\": \"{{$isoTimestamp}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{CORE_URL}}/api/webhook/event",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"event"
+							]
+						},
+						"description": "Send a news update event"
+					}
+				},
+				{
+					"name": "Get Queue Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/queue/status",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"queue",
+								"status"
+							]
+						},
+						"description": "Get current event queue status"
+					}
+				},
+				{
+					"name": "Get Context",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/context/{{TOKEN_ID}}",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"context",
+								"{{TOKEN_ID}}"
+							]
+						},
+						"description": "Get current context for a token from Redis"
+					}
+				},
+				{
+					"name": "Get Thought History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/thoughts/{{TOKEN_ID}}?limit=50&offset=0",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"thoughts",
+								"{{TOKEN_ID}}"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Get LLM thought history for a token"
+					}
+				},
+				{
+					"name": "Get Analytics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/analytics/{{TOKEN_ID}}?metric_name=price",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"analytics",
+								"{{TOKEN_ID}}"
+							],
+							"query": [
+								{
+									"key": "metric_name",
+									"value": "price",
+									"description": "Optional: filter by metric name"
+								}
+							]
+						},
+						"description": "Get analytics for a token"
+					}
+				},
+				{
+					"name": "Update Settings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token_id\": \"{{TOKEN_ID}}\",\n  \"setting_key\": \"wallet_min_threshold\",\n  \"setting_value\": \"2000000\"\n}"
+						},
+						"url": {
+							"raw": "{{CORE_URL}}/api/settings/update",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"settings",
+								"update"
+							]
+						},
+						"description": "Update monitoring settings"
+					}
+				},
+				{
+					"name": "Get All Tokens",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/tokens",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"tokens"
+							]
+						},
+						"description": "Get all configured tokens"
+					}
+				}
+			],
+			"description": "Core Service API endpoints for event processing and LLM analysis"
+		},
+		{
+			"name": "Wallet Monitor",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WALLET_URL}}/health",
+							"host": [
+								"{{WALLET_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check Wallet Monitor health status"
+					}
+				},
+				{
+					"name": "Get Wallet Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WALLET_URL}}/api/wallets/summary/{{TOKEN_ID}}",
+							"host": [
+								"{{WALLET_URL}}"
+							],
+							"path": [
+								"api",
+								"wallets",
+								"summary",
+								"{{TOKEN_ID}}"
+							]
+						},
+						"description": "Get summary of watched wallets for a token"
+					}
+				},
+				{
+					"name": "Get Wallet Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WALLET_URL}}/api/wallets/{{WALLET_ADDRESS}}?token_id={{TOKEN_ID}}",
+							"host": [
+								"{{WALLET_URL}}"
+							],
+							"path": [
+								"api",
+								"wallets",
+								"{{WALLET_ADDRESS}}"
+							],
+							"query": [
+								{
+									"key": "token_id",
+									"value": "{{TOKEN_ID}}"
+								}
+							]
+						},
+						"description": "Get details for a specific wallet"
+					}
+				},
+				{
+					"name": "Get Recent Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WALLET_URL}}/api/transactions/{{TOKEN_ID}}?limit=50",
+							"host": [
+								"{{WALLET_URL}}"
+							],
+							"path": [
+								"api",
+								"transactions",
+								"{{TOKEN_ID}}"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get recent transactions for a token"
+					}
+				}
+			],
+			"description": "Wallet Monitor API endpoints for blockchain wallet tracking"
+		},
+		{
+			"name": "Exchange Monitor",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EXCHANGE_URL}}/health",
+							"host": [
+								"{{EXCHANGE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check Exchange Monitor health status"
+					}
+				},
+				{
+					"name": "Get Latest Market Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EXCHANGE_URL}}/api/market/latest/{{TOKEN_ID}}",
+							"host": [
+								"{{EXCHANGE_URL}}"
+							],
+							"path": [
+								"api",
+								"market",
+								"latest",
+								"{{TOKEN_ID}}"
+							]
+						},
+						"description": "Get latest market data across all exchanges"
+					}
+				},
+				{
+					"name": "Get Market History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EXCHANGE_URL}}/api/market/history/{{TOKEN_ID}}?exchange=binance&hours=24",
+							"host": [
+								"{{EXCHANGE_URL}}"
+							],
+							"path": [
+								"api",
+								"market",
+								"history",
+								"{{TOKEN_ID}}"
+							],
+							"query": [
+								{
+									"key": "exchange",
+									"value": "binance",
+									"description": "Optional: filter by exchange"
+								},
+								{
+									"key": "hours",
+									"value": "24",
+									"description": "Time range in hours"
+								}
+							]
+						},
+						"description": "Get historical market data"
+					}
+				},
+				{
+					"name": "Get Exchanges",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EXCHANGE_URL}}/api/exchanges",
+							"host": [
+								"{{EXCHANGE_URL}}"
+							],
+							"path": [
+								"api",
+								"exchanges"
+							]
+						},
+						"description": "Get list of configured exchanges"
+					}
+				}
+			],
+			"description": "Exchange Monitor API endpoints for market data tracking"
+		},
+		{
+			"name": "News Monitor",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NEWS_URL}}/health",
+							"host": [
+								"{{NEWS_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check News Monitor health status"
+					}
+				},
+				{
+					"name": "Get Recent News",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NEWS_URL}}/api/news/recent/{{TOKEN_ID}}?limit=20",
+							"host": [
+								"{{NEWS_URL}}"
+							],
+							"path": [
+								"api",
+								"news",
+								"recent",
+								"{{TOKEN_ID}}"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get recent relevant news for a token"
+					}
+				},
+				{
+					"name": "Search News",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NEWS_URL}}/api/news/search?token_id={{TOKEN_ID}}&keyword=bitcoin&hours=168",
+							"host": [
+								"{{NEWS_URL}}"
+							],
+							"path": [
+								"api",
+								"news",
+								"search"
+							],
+							"query": [
+								{
+									"key": "token_id",
+									"value": "{{TOKEN_ID}}",
+									"description": "Optional: filter by token"
+								},
+								{
+									"key": "keyword",
+									"value": "bitcoin",
+									"description": "Optional: search keyword"
+								},
+								{
+									"key": "hours",
+									"value": "168",
+									"description": "Time range in hours (default: 7 days)"
+								}
+							]
+						},
+						"description": "Search news articles"
+					}
+				},
+				{
+					"name": "Trigger Refresh",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{NEWS_URL}}/api/news/refresh",
+							"host": [
+								"{{NEWS_URL}}"
+							],
+							"path": [
+								"api",
+								"news",
+								"refresh"
+							]
+						},
+						"description": "Manually trigger a news refresh"
+					}
+				},
+				{
+					"name": "Get News Sources",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NEWS_URL}}/api/sources",
+							"host": [
+								"{{NEWS_URL}}"
+							],
+							"path": [
+								"api",
+								"sources"
+							]
+						},
+						"description": "Get list of configured news sources"
+					}
+				}
+			],
+			"description": "News Monitor API endpoints for news aggregation and filtering"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "CORE_URL",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "WALLET_URL",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "EXCHANGE_URL",
+			"value": "http://localhost:8002",
+			"type": "string"
+		},
+		{
+			"key": "NEWS_URL",
+			"value": "http://localhost:8003",
+			"type": "string"
+		},
+		{
+			"key": "ACCESS_KEY",
+			"value": "apexwatch-secret-key-change-in-production",
+			"type": "string"
+		},
+		{
+			"key": "TOKEN_ID",
+			"value": "your-token-id-here",
+			"type": "string",
+			"description": "Replace with actual token ID from database"
+		},
+		{
+			"key": "WALLET_ADDRESS",
+			"value": "0x0000000000000000000000000000000000000000",
+			"type": "string",
+			"description": "Replace with actual wallet address"
+		}
+	]
+}
