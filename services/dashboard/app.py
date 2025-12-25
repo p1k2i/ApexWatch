@@ -33,8 +33,8 @@ def init_session_state():
     if 'selected_token' not in st.session_state:
         st.session_state.selected_token = None
 
-    # Restore authentication from cookies
-    if not st.session_state.authenticated and 'apexwatch_token' in cookies:
+    # Restore authentication from cookies (only if cookies are ready)
+    if cookies.ready() and not st.session_state.authenticated and 'apexwatch_token' in cookies:
         token = cookies['apexwatch_token']
         # Verify token is still valid
         user_data = verify_token(token)
@@ -46,6 +46,10 @@ def init_session_state():
 
 def main():
     """Main application"""
+    # Wait for cookies to be ready
+    if not cookies.ready():
+        st.stop()
+
     init_session_state()
 
     # Check authentication
