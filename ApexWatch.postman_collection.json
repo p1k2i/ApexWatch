@@ -192,7 +192,63 @@
 								}
 							]
 						},
-						"description": "Get LLM thought history for a token"
+						"description": "Get LLM thought history for a token (with full content)"
+					}
+				},
+				{
+					"name": "Get Thought List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/thoughts/{{TOKEN_ID}}/list?limit=100&offset=0&event_type=market_update",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"thoughts",
+								"{{TOKEN_ID}}",
+								"list"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "event_type",
+									"value": "market_update",
+									"description": "Optional: filter by event type (market_update, news_article, whale_activity, price_alert)"
+								}
+							]
+						},
+						"description": "Get minimal thought list for browsing (without full content, optimized for UI)"
+					}
+				},
+				{
+					"name": "Get Thought Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CORE_URL}}/api/thoughts/{{TOKEN_ID}}/detail/{{THOUGHT_ID}}",
+							"host": [
+								"{{CORE_URL}}"
+							],
+							"path": [
+								"api",
+								"thoughts",
+								"{{TOKEN_ID}}",
+								"detail",
+								"{{THOUGHT_ID}}"
+							]
+						},
+						"description": "Get full detail for a single thought by ID"
 					}
 				},
 				{
@@ -645,6 +701,12 @@
 			"value": "0x0000000000000000000000000000000000000000",
 			"type": "string",
 			"description": "Replace with actual wallet address"
+		},
+		{
+			"key": "THOUGHT_ID",
+			"value": "your-thought-id-here",
+			"type": "string",
+			"description": "Replace with actual thought ID from database"
 		}
 	]
 }
