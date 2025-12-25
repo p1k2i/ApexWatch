@@ -250,6 +250,116 @@ async def get_thought_history(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Get thought list (minimal data for browsing)
+@app.get("/api/thoughts/{token_id}/list", dependencies=[Depends(verify_access_key)])
+async def get_thought_list(
+    token_id: str,
+    limit: int = 100,
+    offset: int = 0,
+    event_type: Optional[str] = None
+):
+    """Get minimal thought list for browsing (without full content)"""
+    try:
+        ch = db_manager.get_clickhouse()
+
+        # Validate and sanitize
+        limit = min(max(int(limit), 1), 1000)
+        offset = max(int(offset), 0)
+
+        # Build query with optional event_type filter
+        if event_type and event_type != "All":
+            query = """
+                SELECT
+                    id, event_type, event_id, model_used, tokens_used,
+                    processing_time_ms, timestamp,
+                    substring(thought, 1, 100) as thought_preview
+                FROM llm_thoughts
+                WHERE token_id = %s AND event_type = %s
+                ORDER BY timestamp DESC
+                LIMIT %s OFFSET %s
+            """
+            result = ch.query(query, parameters=[token_id, event_type, limit, offset])
+        else:
+            query = """
+                SELECT
+                    id, event_type, event_id, model_used, tokens_used,
+                    processing_time_ms, timestamp,
+                    substring(thought, 1, 100) as thought_preview
+                FROM llm_thoughts
+                WHERE token_id = %s
+                ORDER BY timestamp DESC
+                LIMIT %s OFFSET %s
+            """
+            result = ch.query(query, parameters=[token_id, limit, offset])
+
+        thoughts = []
+        for row in result.result_rows:
+            thoughts.append({
+                "id": str(row[0]),
+                "event_type": row[1],
+                "event_id": row[2],
+                "model_used": row[3],
+                "tokens_used": row[4],
+                "processing_time_ms": row[5],
+                "timestamp": row[6].isoformat() if row[6] else None,
+                "thought_preview": row[7]
+            })
+
+        return {
+            "token_id": token_id,
+            "thoughts": thoughts,
+            "count": len(thoughts),
+            "limit": limit,
+            "offset": offset
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting thought list: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Get single thought detail
+@app.get("/api/thoughts/{token_id}/detail/{thought_id}", dependencies=[Depends(verify_access_key)])
+async def get_thought_detail(token_id: str, thought_id: str):
+    """Get full detail for a single thought"""
+    try:
+        ch = db_manager.get_clickhouse()
+
+        query = """
+            SELECT
+                id, token_id, event_type, event_id, prompt, thought,
+                model_used, tokens_used, processing_time_ms, timestamp
+            FROM llm_thoughts
+            WHERE token_id = %s AND id = %s
+        """
+
+        result = ch.query(query, parameters=[token_id, thought_id])
+
+        if not result.result_rows:
+            raise HTTPException(status_code=404, detail="Thought not found")
+
+        row = result.result_rows[0]
+
+        return {
+            "id": str(row[0]),
+            "token_id": row[1],
+            "event_type": row[2],
+            "event_id": row[3],
+            "prompt": row[4],
+            "thought": row[5],
+            "model_used": row[6],
+            "tokens_used": row[7],
+            "processing_time_ms": row[8],
+            "timestamp": row[9].isoformat() if row[9] else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting thought detail: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Get token analytics
 @app.get("/api/analytics/{token_id}", dependencies=[Depends(verify_access_key)])
 async def get_analytics(token_id: str, metric_name: Optional[str] = None):
