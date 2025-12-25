@@ -91,10 +91,10 @@ def overview_page():
                 f"{settings.EXCHANGE_MONITOR_URL}/api/market/latest/{token_id}"
             )
             if market_data and market_data.get('markets'):
-                avg_price = sum(m['price'] for m in market_data['markets'] if m['price']) / len(market_data['markets'])
-                st.metric("Avg Price", f"${avg_price:.4f}")
+                price = market_data['markets'][0].get('price')
+                st.metric("Price", f"${price:.4f}" if price else "N/A")
             else:
-                st.metric("Avg Price", "N/A")
+                st.metric("Price", "N/A")
 
         with col3:
             # Get wallet count
