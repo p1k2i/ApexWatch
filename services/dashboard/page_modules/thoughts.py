@@ -3,9 +3,51 @@ AI Thoughts browsing page for ApexWatch Dashboard
 """
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 from config import settings
 from page_modules.utils import make_api_request
+from database import get_db_connection
+
+
+@st.cache_data(ttl=300)
+def get_thought_performance_metrics(token_id: str, days: int = 7):
+    """Get AI thought processing performance metrics from PostgreSQL"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Since we don't have direct access to ClickHouse, we'll aggregate from what we have
+        # This is a placeholder - in production, you'd query ClickHouse directly
+        query = """
+        SELECT
+            DATE_TRUNC('hour', fetched_at) as hour,
+            COUNT(*) as event_count,
+            'news' as event_type
+        FROM news_articles
+        WHERE token_id = %s
+            AND fetched_at > NOW() - INTERVAL '%s days'
+        GROUP BY hour
+        ORDER BY hour DESC
+        LIMIT 100
+        """
+
+        cur.execute(query, (token_id, days))
+        results = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        if results:
+            df = pd.DataFrame(results, columns=['hour', 'event_count', 'event_type'])
+            df['hour'] = pd.to_datetime(df['hour'])
+            return df
+        return pd.DataFrame()
+
+    except Exception as e:
+        st.error(f"Error fetching performance metrics: {e}")
+        return pd.DataFrame()
 
 
 def format_timestamp(ts_str: str) -> str:
@@ -42,6 +84,42 @@ def thoughts_page():
     if 'selected_thought_id' not in st.session_state:
         st.session_state.selected_thought_id = None
 
+    # Performance Metrics Section
+    with st.expander("📊 Performance Analytics", expanded=False):
+        st.markdown("### AI Processing Performance")
+
+        perf_data = get_thought_performance_metrics(token_id, 7)
+
+        if not perf_data.empty:
+            # Event frequency chart
+            fig = px.bar(
+                perf_data,
+                x='hour',
+                y='event_count',
+                color='event_type',
+                title='AI Processing Activity (Last 7 days)',
+                labels={'hour': 'Time', 'event_count': 'Events Processed'}
+            )
+
+            fig.update_layout(hovermode='x unified')
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Summary stats
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                total_events = perf_data['event_count'].sum()
+                st.metric("Total Events", f"{int(total_events):,}")
+            with col2:
+                avg_per_hour = perf_data['event_count'].mean()
+                st.metric("Avg Events/Hour", f"{avg_per_hour:.1f}")
+            with col3:
+                peak_hour = perf_data.loc[perf_data['event_count'].idxmax(), 'hour']
+                st.metric("Peak Activity", peak_hour.strftime("%m-%d %H:00"))
+        else:
+            st.info("No performance data available")
+
+    st.markdown("---")
+
     # Filters in the top bar
     col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
 
@@ -57,6 +135,7 @@ def thoughts_page():
 
     with col4:
         if st.button("🔄 Refresh", use_container_width=True):
+            st.cache_data.clear()
             st.rerun()
 
     st.markdown("---")
@@ -220,17 +299,58 @@ def thoughts_page():
 
     # Event type distribution chart
     if 'event_type' in df and len(df) > 0:
-        col1, col2 = st.columns([2, 1])
+        st.markdown("#### 📊 Detailed Analysis")
+
+        col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("#### 📈 Event Type Distribution")
+            st.markdown("##### 📈 Event Type Distribution")
             event_counts = df['event_type'].value_counts()
-            st.bar_chart(event_counts)
+
+            fig = px.pie(
+                values=event_counts.values,
+                names=event_counts.index,
+                title='Event Types',
+                hole=0.4
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
         with col2:
-            st.markdown("#### 🎨 Event Types")
+            st.markdown("##### 🎨 Event Types Breakdown")
             for event_type, count in event_counts.items():
                 emoji = get_event_emoji(event_type)
-                st.markdown(f"{emoji} **{event_type}**: {count}")
+                percentage = (count / len(df) * 100) if len(df) > 0 else 0
+                st.markdown(f"{emoji} **{event_type}**: {count} ({percentage:.1f}%)")
+
+        # Processing time distribution
+        if 'processing_time_ms' in df and len(df) > 0:
+            st.markdown("---")
+            st.markdown("##### ⚡ Processing Time Distribution")
+
+            fig = px.histogram(
+                df,
+                x='processing_time_ms',
+                nbins=30,
+                title='Processing Time Distribution',
+                labels={'processing_time_ms': 'Processing Time (ms)', 'count': 'Frequency'},
+                color_discrete_sequence=['#9B59B6']
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Processing time stats
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                min_time = df['processing_time_ms'].min()
+                st.metric("Min Time", f"{min_time:.0f}ms")
+            with col2:
+                max_time = df['processing_time_ms'].max()
+                st.metric("Max Time", f"{max_time:.0f}ms")
+            with col3:
+                median_time = df['processing_time_ms'].median()
+                st.metric("Median Time", f"{median_time:.0f}ms")
+            with col4:
+                std_time = df['processing_time_ms'].std()
+                st.metric("Std Dev", f"{std_time:.0f}ms")
 
 
