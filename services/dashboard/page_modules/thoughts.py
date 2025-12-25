@@ -93,35 +93,18 @@ def thoughts_page():
             # Determine if this thought is selected
             is_selected = st.session_state.selected_thought_id == thought['id']
 
-            # Create a container for each thought item
-            container_style = """
-                background-color: #262730;
-                border-left: 4px solid #4CAF50;
-                padding: 12px;
-                margin-bottom: 8px;
-                border-radius: 4px;
-                cursor: pointer;
-            """ if is_selected else """
-                background-color: #1e1e1e;
-                border-left: 4px solid #444;
-                padding: 12px;
-                margin-bottom: 8px;
-                border-radius: 4px;
-                cursor: pointer;
-            """
-
             with st.container():
                 # Create button that looks like a list item
-                col_emoji, col_content = st.columns([0.15, 0.85])
+                col_emoji, col_content = st.columns([0.1, 0.9])
 
                 with col_emoji:
-                    st.markdown(f"<h2 style='margin:0;'>{get_event_emoji(thought['event_type'])}</h2>",
+                    st.markdown(f"<span style='font-size:20px;'>{get_event_emoji(thought['event_type'])}</span>",
                               unsafe_allow_html=True)
 
                 with col_content:
                     # Button to select this thought
                     if st.button(
-                        f"{thought['event_type']}",
+                        f"{thought['event_type'].replace('_', ' ').title()}",
                         key=f"thought_{thought['id']}",
                         use_container_width=True,
                         type="primary" if is_selected else "secondary"
@@ -129,18 +112,17 @@ def thoughts_page():
                         st.session_state.selected_thought_id = thought['id']
                         st.rerun()
 
-                    # Show preview and metadata
-                    st.caption(f"⏱️ {format_timestamp(thought['timestamp'])}")
-                    st.caption(f"🤖 {thought['model_used']} • 🔢 {thought['tokens_used']} tokens")
+                    # Compact metadata in one line
+                    st.caption(f"⏱️ {format_timestamp(thought['timestamp'])[:17]} • 🤖 {thought['model_used'].split('/')[-1][:10]} • {thought['tokens_used']} tokens")
 
-                    # Preview text
+                    # Shorter preview text
                     if thought.get('thought_preview'):
-                        preview = thought['thought_preview']
-                        if len(preview) > 80:
-                            preview = preview[:80] + "..."
-                        st.caption(f"💬 {preview}")
+                        preview = thought['thought_preview'].strip()
+                        if len(preview) > 60:
+                            preview = preview[:60] + "..."
+                        st.caption(f"{preview}")
 
-                st.markdown("---")
+                st.markdown("<hr style='margin: 8px 0;'>", unsafe_allow_html=True)
 
     # Right side - Thought viewer
     with viewer_col:
