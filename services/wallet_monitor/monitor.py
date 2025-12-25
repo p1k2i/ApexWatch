@@ -18,6 +18,17 @@ logger = logging.getLogger(__name__)
 # ERC-20 Transfer event signature
 TRANSFER_EVENT_SIGNATURE = Web3.keccak(text="Transfer(address,address,uint256)").hex()
 
+# ERC-20 ABI for balanceOf function
+ERC20_ABI = [
+    {
+        "constant": True,
+        "inputs": [{"name": "_owner", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "balance", "type": "uint256"}],
+        "type": "function"
+    }
+]
+
 
 def sanitize_logs(message: str) -> str:
     """Remove sensitive API keys from log messages"""
@@ -275,6 +286,85 @@ class BlockchainMonitor:
         except Exception as e:
             logger.error(f"Error in wallet discovery: {e}")
 
+    def get_wallet_balance(self, wallet_address: str, contract_address: str, decimals: int) -> Optional[float]:
+        """Fetch wallet balance for a specific token from blockchain"""
+        try:
+            if not self.w3 or not self.w3.is_connected():
+                logger.error("Web3 connection not available")
+                return None
+
+            # Validate and checksum addresses
+            wallet_checksum = Web3.to_checksum_address(wallet_address)
+            contract_checksum = Web3.to_checksum_address(contract_address)
+
+            # Create contract instance
+            contract = self.w3.eth.contract(address=contract_checksum, abi=ERC20_ABI)
+
+            # Call balanceOf function
+            balance_raw = contract.functions.balanceOf(wallet_checksum).call()
+            balance = balance_raw / (10 ** decimals)
+
+            return balance
+
+        except Exception as e:
+            logger.error(f"Error fetching balance for {wallet_address[:10]}...: {e}")
+            return None
+
+    def update_wallet_balance(self, token_id: str, wallet_address: str, balance: float):
+        """Update wallet balance in database"""
+        try:
+            conn = psycopg2.connect(**self.db_params)
+            cur = conn.cursor()
+
+            cur.execute("""
+                UPDATE watched_wallets
+                SET balance = %s, updated_at = %s
+                WHERE token_id = %s AND address = %s
+            """, (balance, datetime.now(), token_id, wallet_address))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+        except Exception as e:
+            logger.error(f"Error updating wallet balance: {e}")
+
+    def refresh_wallet_balances(self, token_config: Dict[str, Any]):
+        """Refresh balances for all watched wallets of a token"""
+        try:
+            token_id = str(token_config['id'])
+            contract_address = token_config['contract_address']
+            decimals = token_config['decimals']
+
+            conn = psycopg2.connect(**self.db_params)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Get all watched wallets for this token
+            cur.execute("""
+                SELECT address FROM watched_wallets
+                WHERE token_id = %s
+                LIMIT 50
+            """, (token_id,))
+
+            wallets = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            if not wallets:
+                return
+
+            logger.info(f"Refreshing balances for {len(wallets)} wallets of token {token_config['symbol']}")
+
+            # Update balance for each wallet
+            for wallet in wallets:
+                balance = self.get_wallet_balance(wallet['address'], contract_address, decimals)
+                if balance is not None:
+                    self.update_wallet_balance(token_id, wallet['address'], balance)
+                    logger.debug(f"Updated balance for {wallet['address'][:10]}... to {balance}")
+
+        except Exception as e:
+            logger.error(f"Error refreshing wallet balances: {e}")
+
     def send_event_to_core(self, event: Dict[str, Any]):
         """Send event to Core Service via webhook"""
         try:
@@ -293,6 +383,9 @@ class BlockchainMonitor:
         """Main monitoring loop"""
         logger.info("Starting wallet monitoring loop...")
 
+        balance_refresh_counter = 0
+        balance_refresh_interval = 10  # Refresh balances every 10 iterations
+
         while True:
             try:
                 # Get active tokens
@@ -304,6 +397,14 @@ class BlockchainMonitor:
                     # Monitor each token
                     for token in tokens:
                         self.monitor_token_transfers(token)
+
+                    # Periodically refresh wallet balances
+                    balance_refresh_counter += 1
+                    if balance_refresh_counter >= balance_refresh_interval:
+                        logger.info("Refreshing wallet balances...")
+                        for token in tokens:
+                            self.refresh_wallet_balances(token)
+                        balance_refresh_counter = 0
 
                 # Wait before next iteration
                 time.sleep(settings.POLL_INTERVAL_SECONDS)
