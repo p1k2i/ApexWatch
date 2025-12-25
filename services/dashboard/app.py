@@ -15,7 +15,7 @@ st.set_page_config(
 # Now import everything else
 from streamlit_cookies_manager import CookieManager
 from auth import verify_token
-from page_modules import login_page, overview_page, wallets_page, market_page, news_page, settings_page
+from page_modules import login_page, overview_page, wallets_page, market_page, news_page, thoughts_page, settings_page
 
 
 # Initialize cookies manager
@@ -66,7 +66,7 @@ def main():
 
         page = st.radio(
             "Navigation",
-            ["Overview", "Wallets", "Market", "News", "Settings"]
+            ["Overview", "Wallets", "Market", "News", "AI Thoughts", "Settings"]
         )
 
         st.markdown("---")
@@ -92,6 +92,8 @@ def main():
         market_page()
     elif page == "News":
         news_page()
+    elif page == "AI Thoughts":
+        thoughts_page()
     elif page == "Settings":
         settings_page()
 
