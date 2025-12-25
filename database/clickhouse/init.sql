@@ -1,6 +1,9 @@
 -- ClickHouse Database Schema for ApexWatch
 -- This script initializes tables for storing LLM thought history and time-series analytics
 
+-- Ensure we're using the correct database
+USE apexwatch;
+
 -- ====================
 -- LLM THOUGHTS HISTORY
 -- ====================
