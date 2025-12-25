@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from config import settings
-from .utils import make_api_request
+from page_modules.utils import make_api_request
 
 
 def market_page():

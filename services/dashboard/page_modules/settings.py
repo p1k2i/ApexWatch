@@ -4,7 +4,7 @@ Settings page for ApexWatch Dashboard
 import streamlit as st
 import pandas as pd
 from config import settings
-from .utils import make_api_request, get_tokens
+from page_modules.utils import make_api_request, get_tokens
 
 
 def settings_page():

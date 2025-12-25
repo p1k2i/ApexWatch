@@ -5,7 +5,7 @@ Streamlit-based dashboard for monitoring and configuration
 import streamlit as st
 from streamlit_cookies_manager import CookieManager
 from auth import verify_token
-from pages import login_page, overview_page, wallets_page, market_page, news_page, settings_page
+from page_modules import login_page, overview_page, wallets_page, market_page, news_page, settings_page
 
 
 # Page config

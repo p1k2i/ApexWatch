@@ -3,7 +3,7 @@ News monitoring page for ApexWatch Dashboard
 """
 import streamlit as st
 from config import settings
-from .utils import make_api_request
+from page_modules.utils import make_api_request
 
 
 def news_page():
