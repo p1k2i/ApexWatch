@@ -231,7 +231,7 @@ def news_page():
         # Sentiment statistics
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            avg_sent = sentiment_timeline['avg_sentiment'].mean()
+            avg_sent = float(sentiment_timeline['avg_sentiment'].mean())
             sent_label = "Positive" if avg_sent > 0.1 else "Negative" if avg_sent < -0.1 else "Neutral"
             st.metric("Overall Sentiment", sent_label, f"{avg_sent:.3f}")
         with col2:
@@ -289,14 +289,16 @@ def news_page():
 
         # Statistics
         col1, col2, col3 = st.columns(3)
+        # Convert sentiment_score to float to handle Decimal types
+        sentiment_scores = sentiment_dist['sentiment_score'].astype(float)
         with col1:
-            median_sent = sentiment_dist['sentiment_score'].median()
+            median_sent = sentiment_scores.median()
             st.metric("Median Sentiment", f"{median_sent:.3f}")
         with col2:
-            std_sent = sentiment_dist['sentiment_score'].std()
+            std_sent = sentiment_scores.std()
             st.metric("Std Deviation", f"{std_sent:.3f}")
         with col3:
-            range_sent = sentiment_dist['sentiment_score'].max() - sentiment_dist['sentiment_score'].min()
+            range_sent = sentiment_scores.max() - sentiment_scores.min()
             st.metric("Range", f"{range_sent:.3f}")
     else:
         st.info("No sentiment distribution data available")
