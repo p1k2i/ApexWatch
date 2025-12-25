@@ -58,6 +58,7 @@ class EventProcessor:
             self._store_thought(
                 token_id=token_id,
                 event_type=event_type,
+                prompt=prompt,
                 thought=llm_result['thought'],
                 model=llm_result['model_used'],
                 tokens=llm_result['tokens_used'],
@@ -217,7 +218,7 @@ Relevant news article detected:
 
         return prompts.get(event_type, f"Unknown event type: {event_type}\nData: {json.dumps(event_data)}")
 
-    def _store_thought(self, token_id: str, event_type: str, thought: str,
+    def _store_thought(self, token_id: str, event_type: str, prompt: str, thought: str,
                        model: str, tokens: int, processing_time: int):
         """Store LLM thought in ClickHouse"""
         ch = db_manager.get_clickhouse()
@@ -228,7 +229,7 @@ Relevant news article detected:
                 token_id,
                 event_type,
                 str(uuid.uuid4()),  # event_id
-                "",  # prompt (optional, can be large)
+                prompt,
                 thought,
                 model,
                 tokens,
