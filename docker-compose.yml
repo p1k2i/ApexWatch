@@ -186,14 +186,15 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
-      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - OPENAI_API_URL=${OPENAI_API_URL:-https://api.openai.com/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_MODEL=${OPENAI_API_MODEL:-gpt-4o-mini}
       - WALLET_MONITOR_URL=http://wallet-monitor:8001
       - EXCHANGE_MONITOR_URL=http://exchange-monitor:8002
       - NEWS_MONITOR_URL=http://news-monitor:8003
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
       - ACCESS_KEY=${ACCESS_KEY:-apexwatch-secret-key-change-in-production}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

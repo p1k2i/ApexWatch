@@ -42,12 +42,10 @@ class Settings(BaseSettings):
     RABBITMQ_PASSWORD: str = "guest"
     RABBITMQ_QUEUE: str = "events_queue"
 
-    # LLM Configuration
-    LLM_PROVIDER: str = "ollama"  # ollama or openai
-    LLM_MODEL: str = "llama3"
-    OLLAMA_URL: str = "http://ollama:11434"
+    # LLM Configuration (OpenAI-compatible API)
+    OPENAI_API_URL: str = "https://api.openai.com/v1"
     OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_API_MODEL: str = "gpt-4o-mini"
     LLM_MAX_RETRIES: int = 3
     LLM_TIMEOUT: int = 120
 

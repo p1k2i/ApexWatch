@@ -1,9 +1,8 @@
 """
 LLM Integration Module
-Handles communication with LLM providers (Ollama and OpenAI) with fallback support
+Handles communication with OpenAI-compatible API providers
 """
 import openai
-import requests
 import logging
 from typing import Dict, Any, Optional
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -14,16 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """Client for interacting with LLM providers"""
+    """Client for interacting with OpenAI-compatible API"""
 
     def __init__(self):
-        self.primary_provider = settings.LLM_PROVIDER
-        self.ollama_url = settings.OLLAMA_URL
-        self.ollama_model = settings.LLM_MODEL
-        self.openai_model = settings.OPENAI_MODEL
+        self.api_url = settings.OPENAI_API_URL
+        self.api_key = settings.OPENAI_API_KEY
+        self.model = settings.OPENAI_API_MODEL
 
-        if settings.OPENAI_API_KEY:
-            openai.api_key = settings.OPENAI_API_KEY
+        if not self.api_key:
+            logger.warning("OPENAI_API_KEY not set. LLM functionality may be limited.")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -45,27 +43,8 @@ class LLMClient:
         # Construct full prompt
         full_prompt = self._construct_prompt(prompt, context)
 
-        try:
-            # Try primary provider
-            if self.primary_provider == "ollama":
-                result = self._call_ollama(full_prompt)
-            else:
-                result = self._call_openai(full_prompt)
-
-        except Exception as e:
-            logger.warning(f"Primary LLM provider failed: {e}. Trying fallback...")
-
-            # Fallback to alternative provider
-            try:
-                if self.primary_provider == "ollama":
-                    result = self._call_openai(full_prompt)
-                    result['model_used'] = f"openai-{self.openai_model}"
-                else:
-                    result = self._call_ollama(full_prompt)
-                    result['model_used'] = f"ollama-{self.ollama_model}"
-            except Exception as fallback_error:
-                logger.error(f"Fallback LLM provider also failed: {fallback_error}")
-                raise
+        # Call OpenAI-compatible API
+        result = self._call_openai_compatible(full_prompt)
 
         processing_time = int((time.time() - start_time) * 1000)
         result['processing_time_ms'] = processing_time
@@ -107,40 +86,18 @@ Provide analysis on:
 
         return full_prompt
 
-    def _call_ollama(self, prompt: str) -> Dict[str, Any]:
-        """Call Ollama API"""
-        url = f"{self.ollama_url}/api/generate"
+    def _call_openai_compatible(self, prompt: str) -> Dict[str, Any]:
+        """Call OpenAI-compatible API"""
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY not configured")
 
-        payload = {
-            "model": self.ollama_model,
-            "prompt": prompt,
-            "stream": False
-        }
-
-        response = requests.post(
-            url,
-            json=payload,
-            timeout=settings.LLM_TIMEOUT
+        client = openai.OpenAI(
+            api_key=self.api_key,
+            base_url=self.api_url
         )
-        response.raise_for_status()
-
-        data = response.json()
-
-        return {
-            'thought': data.get('response', ''),
-            'model_used': f"ollama-{self.ollama_model}",
-            'tokens_used': data.get('eval_count', 0)
-        }
-
-    def _call_openai(self, prompt: str) -> Dict[str, Any]:
-        """Call OpenAI API"""
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OpenAI API key not configured")
-
-        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
 
         response = client.chat.completions.create(
-            model=self.openai_model,
+            model=self.model,
             messages=[
                 {"role": "user", "content": prompt}
             ],
@@ -149,7 +106,7 @@ Provide analysis on:
 
         return {
             'thought': response.choices[0].message.content,
-            'model_used': f"openai-{self.openai_model}",
+            'model_used': self.model,
             'tokens_used': response.usage.total_tokens if response.usage else 0
         }
 
