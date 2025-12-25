@@ -3,110 +3,252 @@ AI Thoughts browsing page for ApexWatch Dashboard
 """
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 from config import settings
 from page_modules.utils import make_api_request
 
 
+def format_timestamp(ts_str: str) -> str:
+    """Format timestamp to a more readable format"""
+    try:
+        dt = datetime.fromisoformat(ts_str)
+        return dt.strftime("%b %d, %Y %I:%M %p")
+    except:
+        return ts_str[:19]
+
+
+def get_event_emoji(event_type: str) -> str:
+    """Get emoji for event type"""
+    emojis = {
+        "market_update": "📊",
+        "news_article": "📰",
+        "whale_activity": "🐋",
+        "price_alert": "🔔",
+    }
+    return emojis.get(event_type, "💭")
+
+
 def thoughts_page():
-    """Display AI thoughts browsing page"""
-    st.title("💭 AI Thoughts")
+    """Display AI thoughts browsing page with split view"""
+    st.title("💭 AI Thoughts Browser")
 
     if not st.session_state.selected_token:
-        st.warning("Please select a token from the Overview page")
+        st.warning("⚠️ Please select a token from the Overview page")
         return
 
     token_id = st.session_state.selected_token
 
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Initialize session state for selected thought
+    if 'selected_thought_id' not in st.session_state:
+        st.session_state.selected_thought_id = None
+
+    # Filters in the top bar
+    col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
 
     with col1:
-        limit = st.selectbox("Show", [10, 25, 50, 100], index=2)
+        limit = st.selectbox("📊 Show", [25, 50, 100, 200], index=1, key="limit_select")
 
     with col2:
         event_types = ["All", "market_update", "news_article", "whale_activity", "price_alert"]
-        event_filter = st.selectbox("Event Type", event_types)
+        event_filter = st.selectbox("🎯 Filter by Type", event_types, key="event_filter")
 
     with col3:
-        sort_order = st.selectbox("Sort", ["Newest First", "Oldest First"])
+        sort_order = st.selectbox("🔄 Sort", ["Newest First", "Oldest First"], key="sort_order")
 
-    # Get thoughts data
+    with col4:
+        if st.button("🔄 Refresh", use_container_width=True):
+            st.rerun()
+
+    st.markdown("---")
+
+    # Get thoughts list (minimal data)
     params = f"?limit={limit}"
     if event_filter != "All":
         params += f"&event_type={event_filter}"
 
     thoughts_data = make_api_request(
-        f"{settings.CORE_SERVICE_URL}/api/thoughts/{token_id}{params}"
+        f"{settings.CORE_SERVICE_URL}/api/thoughts/{token_id}/list{params}"
     )
 
-    if thoughts_data and thoughts_data.get('thoughts'):
-        thoughts = thoughts_data['thoughts']
+    if not thoughts_data or not thoughts_data.get('thoughts'):
+        st.info("📭 No AI thoughts available for this token")
+        return
 
-        # Sort based on selection
-        if sort_order == "Oldest First":
-            thoughts = thoughts[::-1]
+    thoughts = thoughts_data['thoughts']
 
-        st.subheader(f"🤖 AI Thoughts ({len(thoughts)} entries)")
+    # Sort based on selection
+    if sort_order == "Oldest First":
+        thoughts = thoughts[::-1]
 
-        # Display thoughts
-        for i, thought in enumerate(thoughts, 1):
-            with st.expander(f"#{i} - {thought['event_type']} | {thought['timestamp'][:19]}"):
-                # Thought content
-                st.markdown("### 💡 Analysis")
-                st.write(thought['thought'])
+    # Split view layout
+    list_col, viewer_col = st.columns([1, 2])
 
-                # Metadata section
+    # Left side - Thought list
+    with list_col:
+        st.markdown("### 📋 Thoughts List")
+        st.caption(f"Showing {len(thoughts)} entries")
+
+        # Scrollable list container
+        for i, thought in enumerate(thoughts):
+            # Determine if this thought is selected
+            is_selected = st.session_state.selected_thought_id == thought['id']
+
+            # Create a container for each thought item
+            container_style = """
+                background-color: #262730;
+                border-left: 4px solid #4CAF50;
+                padding: 12px;
+                margin-bottom: 8px;
+                border-radius: 4px;
+                cursor: pointer;
+            """ if is_selected else """
+                background-color: #1e1e1e;
+                border-left: 4px solid #444;
+                padding: 12px;
+                margin-bottom: 8px;
+                border-radius: 4px;
+                cursor: pointer;
+            """
+
+            with st.container():
+                # Create button that looks like a list item
+                col_emoji, col_content = st.columns([0.15, 0.85])
+
+                with col_emoji:
+                    st.markdown(f"<h2 style='margin:0;'>{get_event_emoji(thought['event_type'])}</h2>",
+                              unsafe_allow_html=True)
+
+                with col_content:
+                    # Button to select this thought
+                    if st.button(
+                        f"{thought['event_type']}",
+                        key=f"thought_{thought['id']}",
+                        use_container_width=True,
+                        type="primary" if is_selected else "secondary"
+                    ):
+                        st.session_state.selected_thought_id = thought['id']
+                        st.rerun()
+
+                    # Show preview and metadata
+                    st.caption(f"⏱️ {format_timestamp(thought['timestamp'])}")
+                    st.caption(f"🤖 {thought['model_used']} • 🔢 {thought['tokens_used']} tokens")
+
+                    # Preview text
+                    if thought.get('thought_preview'):
+                        preview = thought['thought_preview']
+                        if len(preview) > 80:
+                            preview = preview[:80] + "..."
+                        st.caption(f"💬 {preview}")
+
                 st.markdown("---")
-                col1, col2, col3 = st.columns(3)
 
-                with col1:
-                    st.caption(f"**Model:** {thought['model_used']}")
-                    st.caption(f"**Tokens Used:** {thought['tokens_used']}")
+    # Right side - Thought viewer
+    with viewer_col:
+        if st.session_state.selected_thought_id:
+            # Load full thought detail
+            thought_detail = make_api_request(
+                f"{settings.CORE_SERVICE_URL}/api/thoughts/{token_id}/detail/{st.session_state.selected_thought_id}"
+            )
 
-                with col2:
-                    st.caption(f"**Event Type:** {thought['event_type']}")
-                    st.caption(f"**Timestamp:** {thought['timestamp'][:19]}")
+            if thought_detail:
+                # Header with metadata
+                st.markdown(f"### {get_event_emoji(thought_detail['event_type'])} {thought_detail['event_type'].replace('_', ' ').title()}")
 
-                with col3:
-                    if thought.get('event_data'):
-                        st.caption("**Has Event Data:** ✓")
-                    else:
-                        st.caption("**Has Event Data:** ✗")
+                # Metadata cards
+                meta_col1, meta_col2, meta_col3, meta_col4 = st.columns(4)
 
-                # Show event data if available
-                if thought.get('event_data'):
-                    with st.expander("📋 Event Data Details"):
-                        st.json(thought['event_data'])
+                with meta_col1:
+                    st.metric("⏱️ Time", format_timestamp(thought_detail['timestamp'])[:12])
 
-        # Statistics
-        st.markdown("---")
-        st.subheader("📊 Statistics")
+                with meta_col2:
+                    st.metric("🤖 Model", thought_detail['model_used'].split('/')[-1][:15])
 
-        # Calculate stats
-        df = pd.DataFrame(thoughts)
+                with meta_col3:
+                    st.metric("🔢 Tokens", f"{thought_detail['tokens_used']:,}")
 
-        col1, col2, col3, col4 = st.columns(4)
+                with meta_col4:
+                    processing_time = thought_detail.get('processing_time_ms', 0)
+                    st.metric("⚡ Time", f"{processing_time}ms")
+
+                st.markdown("---")
+
+                # Main thought content
+                st.markdown("#### 💡 AI Analysis")
+                st.markdown(
+                    f"<div style='background-color: #1e1e1e; padding: 20px; border-radius: 8px; "
+                    f"border-left: 4px solid #4CAF50; line-height: 1.6;'>"
+                    f"{thought_detail['thought']}"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+
+                st.markdown("---")
+
+                # Prompt section (collapsible)
+                with st.expander("📝 View Prompt"):
+                    st.code(thought_detail.get('prompt', 'No prompt available'), language="text")
+
+                # Event ID info
+                if thought_detail.get('event_id'):
+                    with st.expander("🔍 Technical Details"):
+                        st.text(f"Event ID: {thought_detail['event_id']}")
+                        st.text(f"Thought ID: {thought_detail['id']}")
+                        st.text(f"Token ID: {thought_detail['token_id']}")
+
+            else:
+                st.error("❌ Failed to load thought details")
+
+        else:
+            # Empty state
+            st.markdown(
+                "<div style='text-align: center; padding: 100px 20px;'>"
+                "<h2 style='color: #888;'>👈 Select a thought from the list</h2>"
+                "<p style='color: #666;'>Click on any thought to view its details here</p>"
+                "</div>",
+                unsafe_allow_html=True
+            )
+
+    # Statistics section at the bottom
+    st.markdown("---")
+    st.markdown("### 📊 Statistics")
+
+    # Calculate stats from the list
+    df = pd.DataFrame(thoughts)
+
+    stat_col1, stat_col2, stat_col3, stat_col4, stat_col5 = st.columns(5)
+
+    with stat_col1:
+        st.metric("📝 Total Thoughts", len(thoughts))
+
+    with stat_col2:
+        avg_tokens = df['tokens_used'].mean() if 'tokens_used' in df and len(df) > 0 else 0
+        st.metric("📊 Avg Tokens", f"{avg_tokens:.0f}")
+
+    with stat_col3:
+        total_tokens = df['tokens_used'].sum() if 'tokens_used' in df and len(df) > 0 else 0
+        st.metric("🔢 Total Tokens", f"{total_tokens:,}")
+
+    with stat_col4:
+        unique_events = df['event_type'].nunique() if 'event_type' in df and len(df) > 0 else 0
+        st.metric("🎯 Event Types", unique_events)
+
+    with stat_col5:
+        avg_time = df['processing_time_ms'].mean() if 'processing_time_ms' in df and len(df) > 0 else 0
+        st.metric("⚡ Avg Time", f"{avg_time:.0f}ms")
+
+    # Event type distribution chart
+    if 'event_type' in df and len(df) > 0:
+        col1, col2 = st.columns([2, 1])
 
         with col1:
-            st.metric("Total Thoughts", len(thoughts))
-
-        with col2:
-            avg_tokens = df['tokens_used'].mean() if 'tokens_used' in df else 0
-            st.metric("Avg Tokens", f"{avg_tokens:.0f}")
-
-        with col3:
-            total_tokens = df['tokens_used'].sum() if 'tokens_used' in df else 0
-            st.metric("Total Tokens", f"{total_tokens:,.0f}")
-
-        with col4:
-            unique_events = df['event_type'].nunique() if 'event_type' in df else 0
-            st.metric("Event Types", unique_events)
-
-        # Event type distribution
-        if 'event_type' in df:
-            st.markdown("### Event Type Distribution")
+            st.markdown("#### 📈 Event Type Distribution")
             event_counts = df['event_type'].value_counts()
             st.bar_chart(event_counts)
-    else:
-        st.info("No AI thoughts available for this token")
+
+        with col2:
+            st.markdown("#### 🎨 Event Types")
+            for event_type, count in event_counts.items():
+                emoji = get_event_emoji(event_type)
+                st.markdown(f"{emoji} **{event_type}**: {count}")
+
 
