@@ -24,6 +24,23 @@ VALUES ('admin', crypt('admin123', gen_salt('bf')))
 ON CONFLICT (username) DO NOTHING;
 
 -- ====================
+-- USER PREFERENCES
+-- ====================
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    preference_key VARCHAR(255) NOT NULL,
+    preference_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(username, preference_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_preferences_username ON user_preferences(username);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(preference_key);
+
+-- ====================
 -- TOKEN CONFIGURATIONS
 -- ====================
 
