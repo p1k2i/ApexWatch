@@ -92,7 +92,10 @@ def overview_page():
             )
             if market_data and market_data.get('markets'):
                 price = market_data['markets'][0].get('price')
-                st.metric("Price", f"${price:.4f}" if price else "N/A")
+                avg_price = sum(m['price'] for m in market_data['markets'] if m['price']) / len(market_data['markets'])
+                delta = price - avg_price if price and avg_price else 0
+                delta_pct = (delta / avg_price * 100) if avg_price else 0
+                st.metric("Price", f"${price:.4f}" if price else "N/A", delta=f"{delta_pct:.2f}%")
             else:
                 st.metric("Price", "N/A")
 
