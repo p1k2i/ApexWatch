@@ -105,7 +105,7 @@ def thoughts_page():
             )
 
             fig.update_layout(hovermode='x unified')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Summary stats
             col1, col2, col3 = st.columns(3)
@@ -137,7 +137,7 @@ def thoughts_page():
         sort_order = st.selectbox("🔄 Sort", ["Newest First", "Oldest First"], key="sort_order")
 
     with col4:
-        if st.button("🔄 Refresh", use_container_width=True):
+        if st.button("🔄 Refresh", width='stretch'):
             st.cache_data.clear()
             st.rerun()
 
@@ -188,7 +188,7 @@ def thoughts_page():
                     if st.button(
                         f"{thought['event_type'].replace('_', ' ').title()}",
                         key=f"thought_{thought['id']}",
-                        use_container_width=True,
+                        width='stretch',
                         type="primary" if is_selected else "secondary"
                     ):
                         st.session_state.selected_thought_id = thought['id']
@@ -316,7 +316,7 @@ def thoughts_page():
                 title='Event Types',
                 hole=0.4
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         with col2:
             st.markdown("##### 🎨 Event Types Breakdown")
@@ -339,7 +339,7 @@ def thoughts_page():
                 color_discrete_sequence=['#9B59B6']
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Processing time stats
             col1, col2, col3, col4 = st.columns(4)

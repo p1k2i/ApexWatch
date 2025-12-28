@@ -137,7 +137,7 @@ def display_price_chart(token_id: str):
                 hovermode='x unified'
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         else:
             st.info("No price data available")
     else:
@@ -380,7 +380,7 @@ def overview_page():
                 height=400
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             st.caption("💡 Strong correlation (>0.95) indicates synchronized pricing across exchanges")
         else:

@@ -225,7 +225,7 @@ def wallets_page():
                     hole=0.4,
                     color_discrete_map={'Whale': '#FF6B6B', 'Regular': '#4ECDC4'}
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             with col2:
                 # Balance distribution
@@ -241,7 +241,7 @@ def wallets_page():
                     color='type',
                     color_discrete_map={'Whale': '#FF6B6B', 'Regular': '#4ECDC4'}
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
         st.markdown("---")
 
@@ -261,7 +261,7 @@ def wallets_page():
 
             st.dataframe(
                 display_df.head(20),
-                use_container_width=True,
+                width='stretch',
                 hide_index=True
             )
 
@@ -294,7 +294,7 @@ def wallets_page():
                 hovermode='x unified'
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Volume over time
             fig = px.area(
@@ -306,7 +306,7 @@ def wallets_page():
             )
 
             fig.update_traces(fill='tozeroy', line_color='#00D2D3')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Stats
             col1, col2, col3 = st.columns(3)
@@ -356,7 +356,7 @@ def wallets_page():
                 height=500
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         else:
             st.info("No whale activity data available for heatmap")
 
@@ -384,13 +384,13 @@ def wallets_page():
             )
 
             fig.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Display full table
             with st.expander("📋 View Full Transaction Pairs Table"):
                 st.dataframe(
                     tx_pairs[['from_address', 'to_address', 'tx_count', 'total_amount', 'last_tx']],
-                    use_container_width=True,
+                    width='stretch',
                     hide_index=True
                 )
         else:
@@ -432,7 +432,7 @@ def wallets_page():
                     fig.update_traces(line_color='#1DD1A1', line_width=3)
                     fig.update_layout(hovermode='x unified')
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                     # Balance change stats
                     col1, col2, col3 = st.columns(3)
@@ -467,7 +467,7 @@ def wallets_page():
 
             st.dataframe(
                 display_tx,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True
             )
         else:

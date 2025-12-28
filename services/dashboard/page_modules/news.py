@@ -183,7 +183,7 @@ def news_page():
             legend=dict(x=0.01, y=0.99)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Sentiment composition over time
         fig = go.Figure()
@@ -226,7 +226,7 @@ def news_page():
             legend=dict(x=0.01, y=0.99)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Sentiment statistics
         col1, col2, col3, col4 = st.columns(4)
@@ -273,7 +273,7 @@ def news_page():
                 showlegend=False
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         with col2:
             # Box plot
@@ -285,7 +285,7 @@ def news_page():
             )
 
             fig.update_traces(marker_color='#00D2D3', boxmean='sd')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         # Statistics
         col1, col2, col3 = st.columns(3)
@@ -351,7 +351,7 @@ def news_page():
             legend=dict(x=0.01, y=0.99)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Correlation scatter
         if 'avg_sentiment' in corr_data.columns and 'avg_price' in corr_data.columns:
@@ -368,7 +368,7 @@ def news_page():
                     hover_data=['date']
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
                 # Calculate correlation
                 correlation = corr_data_clean['avg_sentiment'].corr(corr_data_clean['avg_price'])

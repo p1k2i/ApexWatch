@@ -135,7 +135,7 @@ def market_page():
 
         markets_df = pd.DataFrame(market_data['markets'])
 
-        st.dataframe(markets_df, use_container_width=True)
+        st.dataframe(markets_df, width='stretch')
 
         # Current metrics
         col1, col2, col3, col4 = st.columns(4)
@@ -173,7 +173,7 @@ def market_page():
                 showlegend=False
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         st.markdown("---")
 
@@ -193,7 +193,7 @@ def market_page():
                     hole=0.4
                 )
                 fig.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             with col2:
                 # Bar chart
@@ -205,7 +205,7 @@ def market_page():
                     title='Volume by Exchange',
                     labels={'volume_24h': 'Volume (USD)', 'exchange': 'Exchange'}
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             st.markdown("---")
 
@@ -243,7 +243,7 @@ def market_page():
                     legend_title="Exchange"
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
                 # Volatility Analysis
                 st.markdown("### 📉 Volatility Analysis")
@@ -265,7 +265,7 @@ def market_page():
                         hovermode='x unified'
                     )
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                     # Volatility stats
                     col1, col2, col3 = st.columns(3)
@@ -297,7 +297,7 @@ def market_page():
             )
 
             fig.update_layout(hovermode='x unified')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         else:
             st.info("No volume trend data available")
 
@@ -323,7 +323,7 @@ def market_page():
                 )
 
                 fig.update_layout(hovermode='x unified')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
                 # Spread statistics
                 col1, col2, col3 = st.columns(3)

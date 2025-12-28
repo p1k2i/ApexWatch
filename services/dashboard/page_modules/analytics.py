@@ -227,7 +227,7 @@ def analytics_page():
     # Refresh button
     col1, col2, col3 = st.columns([1, 1, 4])
     with col1:
-        if st.button("🔄 Refresh Data", use_container_width=True):
+        if st.button("🔄 Refresh Data", width='stretch'):
             st.cache_data.clear()
             st.rerun()
 
@@ -274,7 +274,7 @@ def analytics_page():
             legend_title="Event Type"
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info("No event data available for the selected time range")
 
@@ -328,7 +328,7 @@ def analytics_page():
             legend=dict(x=0.01, y=0.99)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Sentiment statistics
         col1, col2, col3 = st.columns(3)
@@ -364,7 +364,7 @@ def analytics_page():
             )
 
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         with col2:
             fig = px.bar(
@@ -377,7 +377,7 @@ def analytics_page():
             )
 
             fig.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
     else:
         st.info("No news source data available")
 
@@ -415,7 +415,7 @@ def analytics_page():
             legend=dict(x=0.01, y=0.99)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Whale volume chart
         if 'whale_volume' in whale_data.columns:
@@ -428,7 +428,7 @@ def analytics_page():
             )
 
             fig.update_traces(fill='tozeroy', line_color='#FFA502')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
     else:
         st.info("No whale activity data available")
 
