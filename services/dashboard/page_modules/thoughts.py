@@ -63,7 +63,7 @@ def get_event_emoji(event_type: str) -> str:
     """Get emoji for event type"""
     emojis = {
         "market_update": "📊",
-        "news_article": "📰",
+        "news_update": "📰",
         "whale_activity": "🐋",
         "price_alert": "🔔",
     }
@@ -127,7 +127,7 @@ def thoughts_page():
         limit = st.selectbox("📊 Show", [25, 50, 100, 200], index=1, key="limit_select")
 
     with col2:
-        event_types = ["All", "market_update", "news_article", "whale_activity", "price_alert"]
+        event_types = ["All", "market_update", "news_update", "whale_activity", "price_alert"]
         event_filter = st.selectbox("🎯 Filter by Type", event_types, key="event_filter")
 
     with col3:
