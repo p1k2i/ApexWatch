@@ -62,13 +62,29 @@ class BlockchainMonitor:
 
             self.w3 = Web3(Web3.HTTPProvider(rpc_url))
 
-            if self.w3.is_connected():
-                logger.info(f"Connected to Ethereum node, latest block: {self.w3.eth.block_number}")
-            else:
-                raise Exception("Failed to connect to Ethereum node")
+            # Test connection by making an actual RPC call
+            latest_block = self.w3.eth.block_number
+            logger.info(f"Connected to Ethereum node, latest block: {latest_block}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize blockchain connection: {e}")
+            # Log detailed error information for connection failures
+            error_type = type(e).__name__
+            error_msg = str(e)
+
+            # Extract HTTP status codes and meaningful error details
+            if "429" in error_msg or "Too Many Requests" in error_msg:
+                logger.error("Blockchain connection failed: HTTP 429 - Rate limit exceeded. Check your Alchemy API plan or wait before retrying.")
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                logger.error("Blockchain connection failed: HTTP 403 - Access forbidden. Check your API key permissions.")
+            elif "401" in error_msg or "Unauthorized" in error_msg:
+                logger.error("Blockchain connection failed: HTTP 401 - Unauthorized. Verify your API key is correct.")
+            elif "HTTPError" in error_type:
+                logger.error(f"Blockchain connection failed: {error_type}: {sanitize_logs(error_msg)}")
+            elif "ConnectionError" in error_type or "Timeout" in error_type:
+                logger.error(f"Blockchain connection failed: {error_type} - Network connectivity issue: {sanitize_logs(error_msg)}")
+            else:
+                logger.error(f"Blockchain connection failed: {error_type}: {sanitize_logs(error_msg)}")
+
             raise
 
     def get_token_configs(self) -> List[Dict[str, Any]]:
