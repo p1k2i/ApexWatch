@@ -20,7 +20,7 @@ def settings_page():
         if tokens:
             st.dataframe(
                 pd.DataFrame(tokens),
-                use_container_width=True
+                width='stretch'
             )
 
         st.markdown("---")

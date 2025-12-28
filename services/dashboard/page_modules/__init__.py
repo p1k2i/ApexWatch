@@ -8,6 +8,7 @@ from .market import market_page
 from .news import news_page
 from .thoughts import thoughts_page
 from .settings import settings_page
+from .analytics import analytics_page
 
 __all__ = [
     'login_page',
@@ -16,5 +17,6 @@ __all__ = [
     'market_page',
     'news_page',
     'thoughts_page',
-    'settings_page'
+    'settings_page',
+    'analytics_page'
 ]

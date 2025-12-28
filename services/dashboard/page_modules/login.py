@@ -17,7 +17,7 @@ def login_page(cookies):
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Login", use_container_width=True)
+            submit = st.form_submit_button("Login", width='stretch')
 
             if submit:
                 if username and password:

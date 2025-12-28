@@ -1,0 +1,137 @@
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Sidebar content */
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 2rem;
+}
+
+/* User info card */
+.user-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.user-card .user-label {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.user-card .user-name {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Navigation title */
+.nav-title {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 2rem 0 1rem 0;
+    font-weight: 600;
+}
+
+/* Radio buttons styling */
+[data-testid="stSidebar"] .stRadio > label {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] .stRadio > div {
+    gap: 0.25rem;
+}
+
+/* Hide radio button circles completely */
+[data-testid="stSidebar"] .stRadio label > div:first-child {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] .stRadio label div[role="radio"] {
+    display: none !important;
+}
+
+[data-testid="stSidebar"] .stRadio label div[data-testid="stMarkdownContainer"] {
+    margin-left: 0 !important;
+}
+
+[data-testid="stSidebar"] .stRadio label {
+    background: transparent;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    width: 100%;
+    display: flex !important;
+    align-items: center;
+    margin: 0 !important;
+}
+
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    border-left-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-testid="stSidebar"] .stRadio label[data-checked="true"] {
+    background: rgba(59, 130, 246, 0.15);
+    border-left-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Logout button */
+[data-testid="stSidebar"] .stButton button {
+    width: 100%;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+}
+
+[data-testid="stSidebar"] .stButton button:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Divider */
+[data-testid="stSidebar"] hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 1.5rem 0;
+}
+
+/* App title */
+.app-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.app-subtitle {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+}
