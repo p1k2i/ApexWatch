@@ -16,10 +16,13 @@ st.set_page_config(
 from streamlit_cookies_manager import CookieManager
 from auth import verify_token
 from page_modules import login_page, overview_page, wallets_page, market_page, news_page, thoughts_page, settings_page, analytics_page
-
+from style_loader import StyleLoader
 
 # Initialize cookies manager
 cookies = CookieManager()
+
+# Initialize style loader
+style_loader = StyleLoader()
 
 
 def init_session_state():
@@ -44,6 +47,11 @@ def init_session_state():
             st.session_state.token = token
 
 
+def apply_sidebar_styles():
+    """Apply custom CSS for professional sidebar styling"""
+    style_loader.apply_css("sidebar.css")
+
+
 def main():
     """Main application"""
     # Wait for cookies to be ready
@@ -57,21 +65,36 @@ def main():
         login_page(cookies)
         return
 
+    # Apply custom styling
+    apply_sidebar_styles()
+
     # Sidebar
     with st.sidebar:
-        st.title("🔍 ApexWatch")
-        st.markdown(f"**User:** {st.session_state.username}")
+        # App branding
+        st.markdown('<div class="app-title">🔍 ApexWatch</div>', unsafe_allow_html=True)
+        st.markdown('<div class="app-subtitle">Real-time Market Intelligence</div>', unsafe_allow_html=True)
+
+        # User info card
+        st.markdown(f"""
+            <div class="user-card">
+                <div class="user-label">Logged in as</div>
+                <div class="user-name">{st.session_state.username}</div>
+            </div>
+        """, unsafe_allow_html=True)
 
         st.markdown("---")
 
+        # Navigation section
+        st.markdown('<div class="nav-title">Navigation</div>', unsafe_allow_html=True)
         page = st.radio(
             "Navigation",
-            ["Overview", "Analytics", "Wallets", "Market", "News", "AI Thoughts", "Settings"]
+            ["Overview", "Analytics", "Wallets", "Market", "News", "AI Thoughts", "Settings"],
+            label_visibility="collapsed"
         )
 
         st.markdown("---")
 
-        if st.button("Logout"):
+        if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.username = None
             st.session_state.token = None
