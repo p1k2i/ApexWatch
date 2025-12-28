@@ -5,6 +5,7 @@ FastAPI service with REST endpoints and background monitoring
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
+from contextlib import asynccontextmanager
 import logging
 import sys
 from datetime import datetime
@@ -25,11 +26,42 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup
+    logger.info("Starting Wallet Monitor Service...")
+
+    try:
+        # Initialize blockchain connection
+        blockchain_monitor.initialize()
+
+        # Start monitoring in background thread
+        monitor_thread = threading.Thread(
+            target=blockchain_monitor.run_monitoring_loop,
+            daemon=True
+        )
+        monitor_thread.start()
+
+        logger.info("Wallet Monitor Service started successfully")
+
+    except Exception as e:
+        logger.error(f"Startup failed: {e}")
+        raise
+
+    yield
+
+    # Shutdown
+    logger.info("Shutting down Wallet Monitor Service...")
+
+
 # FastAPI app
 app = FastAPI(
     title="ApexWatch Wallet Monitor",
     description="Monitors blockchain wallets and token transfers",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -59,30 +91,6 @@ async def verify_access_key(x_access_key: str = Header(...)):
     if x_access_key != settings.ACCESS_KEY:
         raise HTTPException(status_code=403, detail="Invalid access key")
     return x_access_key
-
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Initialize and start monitoring"""
-    logger.info("Starting Wallet Monitor Service...")
-
-    try:
-        # Initialize blockchain connection
-        blockchain_monitor.initialize()
-
-        # Start monitoring in background thread
-        monitor_thread = threading.Thread(
-            target=blockchain_monitor.run_monitoring_loop,
-            daemon=True
-        )
-        monitor_thread.start()
-
-        logger.info("Wallet Monitor Service started successfully")
-
-    except Exception as e:
-        logger.error(f"Startup failed: {e}")
-        raise
 
 
 # Health check
